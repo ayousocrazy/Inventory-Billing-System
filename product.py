@@ -1,21 +1,27 @@
+import json
 import os
 import time
 import datetime
 os.chdir(r"C:\Users\HP\Desktop\Project\Inventory and Billing Management System")
 
 class Product:
-    def __init__(self, name, quantity, price):
-        name = name.replace(" ", "-") # Replacing blank spaces with (-)
+    def __init__(self, name, stock, price):
         self.name = name
-        self.quantity = quantity
+        self.stock = stock
         self.price = price
 
-        # Create product.txt if it doesn't exist
-        if not os.path.exists("billing/products.txt"):
-            open("billing/products.txt", 'w').close()
+        path = "billing/products.json"
 
-        with open("billing/products.txt", 'r') as f:
-            num = len(f.readlines()) + 1
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+            except json.JSONDecodeError: # If file is empty or corrupted
+                data = []
+        else:
+            data = []
+
+        num = len(data) + 1
 
         t = time.strftime("%Y%m")[2:]
         # Generate a unique Product ID
@@ -25,26 +31,81 @@ class Product:
 
         self.save_product()
 
-    # Save the Product object attribute to a text file
+    # Save the Product object attribute to a json file
     def save_product(self):
-        with open('billing/products.txt', 'a') as f:
-            product_list = f"{self.__product_id} {self.name} {self.quantity} {self.price}\n"
-            f.write(product_list)
+        product_record = {
+            'product_id' : self.__product_id,
+            'name' : self.name,
+            'stock' : self.stock,
+            'price' : self.price
+        }
 
-    # Display Inventory method
+        path = "billing/products.json"
+
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+            except json.JSONDecodeError: # If file is empty or corrupted
+                data = []
+        else:
+            data = []
+
+        data.append(product_record)
+
+        with open(path, 'w') as f:
+            json.dump(data, f, indent=4)
+
+    # Display list of available products
+    @staticmethod
+    def view_products():
+        path = "billing/products.json"
+
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+            except json.JSONDecodeError: # If file is empty or corrupted
+                data = []
+        else:
+            data = []
+
+        print("| Product Name | Stock |\n")
+
+        if data:
+            for l in data:
+                print(f"| {l['name']} | {l['stock']} |")
+        else:
+            print("Stock Empty")
+
+        print('*'*25)
+
+    # Display Inventory details
     @staticmethod
     def view_inventory(obj):
         if type(obj).__name__.lower() == 'admin':
-            doc = open('billing/products.txt', 'r')
-            lines = doc.readlines()
-            doc.close()
+            path = "billing/products.json"
+
+            if os.path.exists(path):
+                try:
+                    with open(path, "r") as f:
+                        data = json.load(f)
+                except json.JSONDecodeError: # If file is empty or corrupted
+                    data = []
+            else:
+                data = []
+
+            total = 0
             
-            print("| Product Id | Product Name | Quantity | Price |\n")
+            print("| Product Id | Product Name | Stock | Price |\n")
 
-            for line in lines:
-                l = line.split()
-                print(f"| {l[0]} | {l[1]} | {l[2]} | {l[3]} |")
+            if data:
+                for l in data:
+                    total = total + (l["stock"] * l["price"])
+                    print(f"| {l['product_id']} | {l['name']} | {l['stock']} | {l['price']} |")
 
+            print('*'*25)
+            print(f"Total Inventory: {total}")
             print('*'*25)
 
         else:
@@ -74,54 +135,83 @@ class Product:
     # protected update method
     @staticmethod
     def __update_product(product_id, **kwargs):
-        doc = open('billing/products.txt', 'r')
-        lines = doc.readlines()
-        doc.close()
+        path = "billing/products.json"
 
-        # Take the line index (for updating) and line data
-        for i, line in enumerate(lines):
-            l_list = line.split()
-            if product_id in l_list[0]:
-                # Check what attributes to update and replace on original file line
-                name = kwargs['n'].replace(" ", "-") if 'n' in kwargs else l_list[1]
-                quantity = kwargs['q'] if 'q' in kwargs else l_list[2]
-                price = kwargs['p'] if 'p' in kwargs else l_list[3]
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    products = json.load(f)
+            except json.JSONDecodeError:
+                products = []
+        else:
+            products = []
 
-                lines[i] = f"{product_id} {name} {quantity} {price}\n"
+        # Check what attributes to update
+        for p in products:
+            if p["product_id"] == product_id:
 
-                print(f"\nProduct: {product_id} updated successfully")
+                if "n" in kwargs:
+                    p["name"] = kwargs["n"]
 
+                if "s" in kwargs:
+                    p["stock"] = kwargs["s"]
+
+                if "p" in kwargs:
+                    p["price"] = kwargs["p"]
+
+                print(f"\nProduct {product_id} updated successfully.")
                 break
         else:
-            print(f"\nProduct {product_id} not found")
+            print(f"\nProduct {product_id} not found.")
+            return
 
-        with open('billing/products.txt', 'w') as doc:
-            doc.writelines(lines)
+        with open(path, "w") as f:
+            json.dump(products, f, indent=4)
 
     # protected delete method
     @staticmethod
     def __delete_product(product_id):
-        doc = open('billing/products.txt', 'r')
-        lines = doc.readlines()
-        doc.close()
+        path = "billing/products.json"
 
-        # Take the line index (for deleting) and line data
-        for i, line in enumerate(lines):
-            l_list = line.split()
-            if product_id in l_list[0]:
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    products = json.load(f)
+            except json.JSONDecodeError:
+                products = []
+        else:
+            products = []
 
-                # Store the deleted item and datetime on deleted.txt
-                with open('billing/deleted.txt', 'a') as doc:
-                    content = f"Product:{l_list[0]} {l_list[1]} deleted {datetime.datetime.now()}\n"
-                    doc.write(content)
-
-                lines[i] = ""
-
+        for p in products:
+            if p["product_id"] == product_id:
+                deleted_product = p
+                products.remove(p)
                 print(f"\nProduct: {product_id} deleted successfully")
-
                 break
         else:
             print(f"\nProduct {product_id} not found")
+            return
 
-        with open('billing/products.txt', 'w') as doc:
-            doc.writelines(lines)
+        with open("billing/products.json", "w") as f:
+            json.dump(products, f, indent=4)
+
+        # Log deleted products
+        with open("billing/deleted.json", "a") as f:
+            log = {
+                "deleted_product": deleted_product,
+                "deleted_at": str(datetime.datetime.now())
+            }
+            f.write(json.dumps(log) + "\n")
+
+class Cart:
+    def __init__(self):
+        self.product_id = []
+        self.name = []
+        self.quantity = []
+        self.total = 0
+
+    def add_product(self, product_id, quantity):
+        pass
+
+    def checkout(self):
+        pass
