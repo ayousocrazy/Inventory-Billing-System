@@ -192,7 +192,7 @@ class Product:
             print(f"\nProduct {product_id} not found")
             return
 
-        with open("billing/products.json", "w") as f:
+        with open(path, "w") as f:
             json.dump(products, f, indent=4)
 
         # Log deleted products
@@ -210,8 +210,58 @@ class Cart:
         self.quantity = []
         self.total = 0
 
-    def add_product(self, product_id, quantity):
-        pass
+    def add_to_cart(self, product_id, quantity):
+        path = "billing/products.json"
 
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    products = json.load(f)
+            except json.JSONDecodeError:
+                products = []
+        else:
+            products = []
+
+        for p in products:
+            if p["product_id"] == product_id:
+                # Check is the 
+                if p["stock"] >= quantity:
+                    quant = quantity
+                else:
+                    quant = p["stock"]
+                    remain = quantity - p["stock"]
+                    print(f"There is only {p["stock"]} of the product {p["product_id"]}") 
+                    print(f"Remaining quantity {remain}")
+                p["stock"] -= quant
+                self.quantity.append(quant)
+                self.product_id.append(p["product_id"])
+                self.name.append(p["name"])
+                self.total += quant * p["price"]
+
+        with open(path, "w") as f:
+            json.dump(products, f, indent=4)
+    
     def checkout(self):
-        pass
+        # Check if all essential attribute are present
+        if not (len(self.product_id) == len(self.name) == len(self.quantity) and self.total > 0 and len(self.product_id) != 0):
+            print("Error in cart")
+            return
+        
+        path = f"billing/bills/bill-{time.time()}.json"
+        
+        cart = dict()
+
+        cart_var = ["product_id", "name", "quantity"]
+
+        for indx, x in enumerate(self.product_id):
+            record = dict(zip(cart_var, [x, self.name[indx], self.quantity[indx]]))
+            cart[f"product {indx + 1}"] = record
+
+        bill_record = {
+            "cart" : cart,
+            "total" : self.total,
+            'created_at' : str(datetime.datetime.now())
+        }
+
+        with open(path, "w") as f:
+            json.dump(bill_record, f, indent=4)
