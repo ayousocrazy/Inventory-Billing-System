@@ -70,9 +70,8 @@ class Product:
         else:
             data = []
 
-        print("| Product Name | Stock |\n")
-
         if data:
+            print("| Product Name | Stock |\n")
             for l in data:
                 print(f"| {l['name']} | {l['stock']} |")
         else:
@@ -97,12 +96,14 @@ class Product:
 
             total = 0
             
-            print("| Product Id | Product Name | Stock | Price |\n")
 
             if data:
+                print("| Product Id | Product Name | Stock | Price |\n")
                 for l in data:
                     total = total + (l["stock"] * l["price"])
                     print(f"| {l['product_id']} | {l['name']} | {l['stock']} | {l['price']} |")
+            else:
+                print("Stock Empty")
 
             print('*'*25)
             print(f"Total Inventory: {total}")
@@ -150,13 +151,13 @@ class Product:
         for p in products:
             if p["product_id"] == product_id:
 
-                if "n" in kwargs:
+                if kwargs["n"] != "":
                     p["name"] = kwargs["n"]
 
-                if "s" in kwargs:
+                if kwargs["s"] != "":
                     p["stock"] = kwargs["s"]
 
-                if "p" in kwargs:
+                if kwargs["p"] != "":
                     p["price"] = kwargs["p"]
 
                 print(f"\nProduct {product_id} updated successfully.")
@@ -240,6 +241,18 @@ class Cart:
 
         with open(path, "w") as f:
             json.dump(products, f, indent=4)
+
+        self.view_cart()
+
+    def view_cart(self):
+        if not (len(self.product_id) == len(self.name) == len(self.quantity) and self.total > 0 and len(self.product_id) != 0):
+            print("Error in cart")
+            return
+        print("(Cart Details)")
+        print("| S.N. | Product ID | Product | Quantity |")
+
+        for indx, x in self.product_id:
+            print(f"| {indx + 1} | {self.product_id[indx]} | {self.name[indx]} | {self.quantity[indx]} |")
     
     def checkout(self):
         # Check if all essential attribute are present
@@ -265,3 +278,14 @@ class Cart:
 
         with open(path, "w") as f:
             json.dump(bill_record, f, indent=4)
+
+        path = f"billing/sales.json"
+
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    reports = json.load(f)
+            except json.JSONDecodeError:
+                reports = []
+        else:
+            reports = []
