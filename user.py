@@ -12,30 +12,6 @@ class Cashier:
         role = "admin" if type(self).__name__.lower() == "admin" else "cashier"
         self.role = role
 
-    def save_user(self):
-        user_record = {
-            'username' : self.username,
-            'password' : self.__password,
-            'role' : self.role,
-            'created_at' : str(datetime.datetime.now())
-        }
-
-        path = "billing/users.json"
-
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    data = json.load(f)
-            except json.JSONDecodeError: # If file is empty or corrupted
-                data = []
-        else:
-            data = []
-
-        data.append(user_record)
-
-        with open(path, 'w') as f:
-            json.dump(data, f, indent=4) # indent to make it clear
-
     @staticmethod
     def login(username, password):
         path = "billing/users.json"
@@ -81,3 +57,83 @@ class Admin(Cashier):
     
     def delete_product(self, product_id):
         Product.product_delete(self, product_id)
+
+    def view_report(self, option):
+        if option in ["1", "(1)"]:
+            path = "billing/sales.json"
+
+            if os.path.exists(path):
+                try:
+                    with open(path, "w") as f:
+                        reports = json.load(f)
+                except json.JSONDecodeError:
+                    reports = []
+            else:
+                reports = []
+
+            print(l:="Sales Report")
+            print("~"*len(l))
+
+            if reports:
+                print("_" * 50)
+
+                print("| Date | Product Sold |")
+
+                for r in reports:
+                    print(f"| {r["date"]} | ", end="")
+                    for p in r["product_list"]:
+                        print(f"({p["product_id"], p["quantity"]})", end=" ")
+                    print("|\n")
+                    print("-" * 50)
+                print("_" * 50)
+            else:
+                print("*"*15 + "No Sales Yet" + "*"*15)
+                
+        elif option in ["2", "(2)"]:
+            path = "billing/products.json"
+
+            if os.path.exists(path):
+                try:
+                    with open(path, "w") as f:
+                        products = json.load(f)
+                except json.JSONDecodeError:
+                    products = []
+            else:
+                products = []
+
+            if products:
+                print(l:="Inventory Report")
+                print("~"*len(l))
+
+            for p in products:
+                if p["stock"] <= 10:
+                    print(f"| {p["product_id"]} | Only {p["stock"]} left")
+            print("_" * 50)
+
+        else:
+            print("Option not found")
+            return
+        
+    def save_user(self, username, password, role):
+        user_record = {
+            'username' : username,
+            'password' : password,
+            'role' : role,
+            'created_at' : str(datetime.datetime.now())
+        }
+
+        path = "billing/users.json"
+
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+            except json.JSONDecodeError: # If file is empty or corrupted
+                data = []
+        else:
+            data = []
+
+        data.append(user_record)
+
+        with open(path, 'w') as f:
+            json.dump(data, f, indent=4) # indent to make it clear

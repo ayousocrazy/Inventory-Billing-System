@@ -1,14 +1,26 @@
 [
     {
-        "username": "Mridul Kulkarni",
-        "password": "M123456789",
+        "username": "admin67",
+        "password": "admin67",
         "role": "admin",
-        "created_at": "2025-12-10 18:40:02.987522"
+        "created_at": "2025-12-11 08:20:37.798445"
     },
     {
-        "username": "Nagarjun Chaitanya",
-        "password": "Naga123",
+        "username": "Bibek Magar",
+        "password": "bibek123",
         "role": "cashier",
-        "created_at": "2025-12-10 18:40:02.987522"
+        "created_at": "2025-12-11 08:21:47.235163"
+    },
+    {
+        "username": "Pratik Ghimire",
+        "password": "pratik123",
+        "role": "cashier",
+        "created_at": "2025-12-11 08:25:42.158305"
+    },
+    {
+        "username": "PN Lama",
+        "password": "pn123",
+        "role": "cashier",
+        "created_at": "2025-12-11 08:27:55.664294"
     }
 ]

@@ -279,7 +279,7 @@ class Cart:
         with open(path, "w") as f:
             json.dump(bill_record, f, indent=4)
 
-        path = f"billing/sales.json"
+        path = "billing/sales.json"
 
         if os.path.exists(path):
             try:
@@ -289,3 +289,27 @@ class Cart:
                 reports = []
         else:
             reports = []
+
+        now = time.strftime("%Y-%m-%d")
+
+        product_list = [
+            {"product_id": pid, "quantity": qty}
+            for pid, qty in zip(self.product_id, self.quantity)
+        ]
+
+        found = False
+
+        for r in reports:
+            if r.get("date") == now:
+                r.setdefault("product_list", []).extend(product_list)
+                found = True
+                break
+
+        if not found:
+            reports.append({
+                "date": now,
+                "product_list": product_list
+            })
+
+        with open(path, "w") as f:
+            json.dump(reports, f, indent=4)

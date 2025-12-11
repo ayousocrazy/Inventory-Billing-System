@@ -137,7 +137,11 @@ def admin_feature(user):
         user.view_inventory()
 
     elif admin_input == "5":
-        pass
+        print("\n(1) Sales report")
+        print("(2) Inventory Report")
+        report_input = input("Enter number for corresponding report: ")
+
+        user.view_report(report_input)
 
     elif admin_input in ["exit", "(exit)"]:
         return True
