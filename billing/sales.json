@@ -1,0 +1,15 @@
+[
+    {
+        "date": "2025-12-11",
+        "product_list": [
+            {
+                "product_id": "2512-1-N",
+                "quantity": 33.0
+            },
+            {
+                "product_id": "2512-2-P",
+                "quantity": 5
+            }
+        ]
+    }
+]

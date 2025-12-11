@@ -4,155 +4,138 @@ from product import *
 
 init_text = "Inventory and Billing Management System"
 
-print("~" * len(init_text))
+print("_" * len(init_text))
 print(init_text)
-print("~" * len(init_text))
+print("_" * len(init_text))
 
 user = None
 cart = None
-logout = False
 
 def login():
-    print("\n")
-    print("(Login your Account)")
+    print("\n(Login your Account)")
     username = input("Enter your full name: ")
     password = getpass.getpass("Enter your password: ")
 
-    user = Cashier.login(username, password)
+    logged_in_user = Cashier.login(username, password)
 
     # Recrsion to stop user to access without login
-    if user is not None:
+    if logged_in_user:
         print("(Login Successfull)")
-    else:
-        login()
-
-    return user
+        return logged_in_user
+    print("~"*5 + " Login failed. Try again " + "~"*5)
+    return login()
 
 def cashier_feature(cart):
-    print("\n")
-    print(load:="(Cahier Feature)")
-    print("~"*len(load))
+    print("\n(Cashier Feature)")
+    print("_" * len("(Cashier Feature)"))
 
     print("(1) Add items to cart")
     print("(2) View product listing")
-    if cart is not None:
+    if cart:
         print("(3) View Cart")
         print("(4) Checkout")
     print("(exit) Logout")
 
     # Take user input
-    input_text = "Enter numbers or text for corresponding service: "
-    print('~' * len(input_text))
-    cashier_input = input(input_text)
+    choice = input("Enter number or text for service: ").strip()
 
-    if cashier_input == "1":
-        try:
-            p_id = input("Enter Product ID: ")
+    try:
+        if choice == "1":
+            p_id = input("Enter Product ID: ").strip()
             quantity = float(input("Enter Quantity: "))
-            if p_id and quantity and quantity > 0:
-                # Create a cart object if cart is None
-                if cart is None:
+            if p_id and quantity > 0:
+                if not cart:
                     cart = Cart()
                 cart.add_to_cart(p_id, quantity)
             else:
-                print("*"*15 + "Error during adding to cart" + "*"*15)
-        except:
-            print("*"*15 + "Error during adding to cart" + "*"*15)
+                print("~" * 5 + " Invalid input " + "~" * 5)
 
-    elif cashier_input == "2":
-        Product.view_products()
+        elif choice == "2":
+            Product.view_products()
 
-    elif cashier_input == "3" and cart is not None:
-        cart.view_cart()
+        elif choice == "3" and cart:
+            cart.view_cart()
 
-    elif cashier_input == "4" and cart is not None:
-        cart.checkout()
-        cart = None
+        elif choice == "4" and cart:
+            cart.checkout()
+            cart = None
 
-    elif cashier_input in ["exit", "(exit)"]:
-        return cart, True
-    
-    else:
-        cashier_feature(cart)
-    
+        elif choice.lower() == "exit":
+            return cart, True
+
+        else:
+            print("Invalid option.")
+
+    except Exception as e:
+        print("~" * 5 + f" Error: {e} " + "~" * 5)
+
     return cart, False
 
 def admin_feature(user):
-    print("\n")
-    print(load:="(Admin Feature)")
-    print("~"*len(load))
+    print("\n(Admin Feature)")
+    print("_" * len("(Admin Feature)"))
 
     print("(1) Add Product")
     print("(2) Update Product")
     print("(3) Delete Product")
     print("(4) View Inventory")
     print("(5) View Reports")
+    print("(6) View product listing")
     print("(exit) Logout")
 
     # Take user input
-    input_text = "Enter numbers or text for corresponding service: "
-    print('~' * len(input_text))
-    admin_input = input(input_text)
+    choice = input("Enter number or text for service: ").strip()
 
-    if admin_input == "1":
-        try:
-            name = input("Enter Product Name: ")
+    try:
+        if choice == "1":
+            name = input("Enter Product Name: ").strip()
             quantity = float(input("Enter available stock: "))
-            price = float(input("Enter price of per unit product: "))
-
-            if name and quantity and price and quantity > 0 and price > 0:
+            price = float(input("Enter price per unit: "))
+            if name and quantity > 0 and price > 0:
                 user.add_product(name, quantity, price)
             else:
-                print("*"*15 + "Error during getting product input" + "*"*15)
-        except:
-            print("*"*15 + "Error during getting product input" + "*"*15)
+                print("~" * 5 + " Invalid product input " + "~" * 5)
 
-    elif admin_input == "2":
-        try:
-            p_id = input("Enter product id to update: ")
-
-            p_name = input("New product name (leave blank to keep current): ")
+        elif choice == "2":
+            p_id = input("Enter product ID to update: ").strip()
+            p_name = input("New product name (leave blank to keep current): ").strip()
             quantity_input = input("New quantity (leave blank to keep current): ").strip()
             price_input = input("New price (leave blank to keep current): ").strip()
 
-            if quantity_input != "":
-                quantity_input = float(quantity_input)
-            if price_input == "":
-                price_input = float(price_input)
+            quantity_input = float(quantity_input) if quantity_input else ""
+            price_input = float(price_input) if price_input else ""
 
-            user.update_product(p_id, n = p_name, s = quantity_input, p = price_input)
-        except:
-            print("*"*15 + "Error during updating product" + "*"*15)
+            user.update_product(p_id, n=p_name, s=quantity_input, p=price_input)
 
-    elif admin_input == "3":
-        try:
-            p_id = input("Enter product id to delete the product: ")
+        elif choice == "3":
+            p_id = input("Enter product ID to delete: ").strip()
+            if p_id:
+                user.delete_product(p_id)
 
-            if p_id != "":
-                user.delete_product()
-        except:
-            print("*"*15 + "Error during deleting product" + "*"*15)
+        elif choice == "4":
+            user.view_inventory()
 
-    elif admin_input == "4":
-        user.view_inventory()
+        elif choice == "5":
+            print("\n(1) Sales report\n(2) Inventory report")
+            report_choice = input("Enter number for report: ").strip()
+            user.view_report(report_choice)
 
-    elif admin_input == "5":
-        print("\n(1) Sales report")
-        print("(2) Inventory Report")
-        report_input = input("Enter number for corresponding report: ")
+        elif choice == "6":
+            Product.view_products()
 
-        user.view_report(report_input)
+        elif choice.lower() == "exit":
+            return True
 
-    elif admin_input in ["exit", "(exit)"]:
-        return True
-    
-    else:
-        admin_feature(user)
+        else:
+            print("Invalid option.")
+
+    except Exception as e:
+        print("~" * 15 + f" Error: {e} " + "~" * 15)
 
     return False
 
 while True:
-    if user is None:
+    if not user:
         user = login()
 
     if user.role.lower() == "admin":
@@ -161,4 +144,5 @@ while True:
         cart, logout = cashier_feature(cart)
 
     if logout:
+        print("\nLogged out successfully.")
         user = None

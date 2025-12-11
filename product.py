@@ -2,7 +2,15 @@ import json
 import os
 import time
 import datetime
+
 os.chdir(r"C:\Users\HP\Desktop\Project\Inventory and Billing Management System")
+
+PRODUCT_FILE = "billing/products.json"
+SALES_FILE = "billing/sales.json"
+DELETED_FILE = "billing/deleted.json"
+BILLS_DIR = "billing/bills"
+
+os.makedirs(BILLS_DIR, exist_ok=True)
 
 class Product:
     def __init__(self, name, stock, price):
@@ -10,29 +18,29 @@ class Product:
         self.stock = stock
         self.price = price
 
-        path = "billing/products.json"
-
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    data = json.load(f)
-            except json.JSONDecodeError: # If file is empty or corrupted
-                data = []
-        else:
-            data = []
+        data = self._load_product_file()
 
         num = len(data) + 1
-
         t = time.strftime("%Y%m")[2:]
         # Generate a unique Product ID
-        p_id = f"{t}-{num}-{self.name[0].upper()}"
-
-        self.__product_id = p_id
+        self.__product_id = f"{t}-{num}-{self.name[0].upper()}"
 
         self.save_product()
 
+    def _load_product_file(self):
+        if not os.path.exists(PRODUCT_FILE):
+            return []
+
+        try:
+            with open(PRODUCT_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return []
+
     # Save the Product object attribute to a json file
     def save_product(self):
+        data = self._load_product_file()
+
         product_record = {
             'product_id' : self.__product_id,
             'name' : self.name,
@@ -40,276 +48,229 @@ class Product:
             'price' : self.price
         }
 
-        path = "billing/products.json"
-
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    data = json.load(f)
-            except json.JSONDecodeError: # If file is empty or corrupted
-                data = []
-        else:
-            data = []
-
         data.append(product_record)
 
-        with open(path, 'w') as f:
+        with open(PRODUCT_FILE, 'w') as f:
             json.dump(data, f, indent=4)
 
     # Display list of available products
     @staticmethod
     def view_products():
-        path = "billing/products.json"
-
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    data = json.load(f)
-            except json.JSONDecodeError: # If file is empty or corrupted
-                data = []
-        else:
-            data = []
+        data = Product._static_load()
 
         if data:
-            print("| Product Name | Stock |\n")
+            print("\n| Product Name | Stock |\n")
             for l in data:
                 print(f"| {l['name']} | {l['stock']} |")
         else:
             print("Stock Empty")
-
-        print('*'*25)
+        print('_'*25)
 
     # Display Inventory details
     @staticmethod
-    def view_inventory(obj):
-        if type(obj).__name__.lower() == 'admin':
-            path = "billing/products.json"
-
-            if os.path.exists(path):
-                try:
-                    with open(path, "r") as f:
-                        data = json.load(f)
-                except json.JSONDecodeError: # If file is empty or corrupted
-                    data = []
-            else:
-                data = []
-
-            total = 0
-            
-
-            if data:
-                print("| Product Id | Product Name | Stock | Price |\n")
-                for l in data:
-                    total = total + (l["stock"] * l["price"])
-                    print(f"| {l['product_id']} | {l['name']} | {l['stock']} | {l['price']} |")
-            else:
-                print("Stock Empty")
-
-            print('*'*25)
-            print(f"Total Inventory: {total}")
-            print('*'*25)
-
-        else:
+    def view_inventory(user):
+        if type(user).__name__.lower() != "admin":
             print("Admin can only access this feature")
-            print('*'*5 + "Access Denied!" + '*'*5)
+            print("~"*5 + "Access denied" + "~"*5)
+            return
+
+        data = Product._static_load()
+
+        if not data:
+            print("~"*5 + "Stock Empty" + "~"*5)
+            return
+
+        total = 0
+
+        print("\n| Product Id | Product Name | Stock | Price |\n")
+        for p in data:
+            total = total + (p["stock"] * p["price"])
+            print(f"| {p['product_id']} | {p['name']} | {p['stock']} | {p['price']} |")
+                
+
+        print('_'*25)
+        print(f"Total Inventory: {total}")
+        print('_'*25)
 
     @staticmethod
-    def product_update(obj, product_id, **kwargs):
+    def product_update(user, product_id, **kwargs):
         # Check if current logged in user is admin
-        if type(obj).__name__.lower() == 'admin':
+        if type(user).__name__.lower() == 'admin':
             Product.__update_product(product_id, **kwargs)
 
         else:
             print("Admin can only access this feature")
-            print('*'*5 + "Access Denied!" + '*'*5)
+            print('~'*5 + " Access Denied! " + '~'*5)
 
     @staticmethod
-    def product_delete(obj, product_id):
+    def product_delete(user, product_id):
         # Check if current logged in user is admin
-        if type(obj).__name__.lower() == 'admin':
+        if type(user).__name__.lower() == 'admin':
             Product.__delete_product(product_id)
 
         else:
             print("Admin can only access this feature")
-            print('*'*5 + "Access Denied!" + '*'*5)
+            print('~'*5 + " Access Denied! " + '~'*5)
 
     # protected update method
     @staticmethod
     def __update_product(product_id, **kwargs):
-        path = "billing/products.json"
-
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    products = json.load(f)
-            except json.JSONDecodeError:
-                products = []
-        else:
-            products = []
+        data = Product._static_load()
 
         # Check what attributes to update
-        for p in products:
+        for p in data:
             if p["product_id"] == product_id:
+                if kwargs.get("n"): p["name"] = kwargs["n"]
+                if kwargs.get("s"): p["stock"] = int(kwargs["s"])
+                if kwargs.get("p"): p["price"] = float(kwargs["p"])
 
-                if kwargs["n"] != "":
-                    p["name"] = kwargs["n"]
-
-                if kwargs["s"] != "":
-                    p["stock"] = kwargs["s"]
-
-                if kwargs["p"] != "":
-                    p["price"] = kwargs["p"]
+                with open(PRODUCT_FILE, "w") as f:
+                    json.dump(data, f, indent=4)
 
                 print(f"\nProduct {product_id} updated successfully.")
-                break
-        else:
-            print(f"\nProduct {product_id} not found.")
-            return
-
-        with open(path, "w") as f:
-            json.dump(products, f, indent=4)
+                return
+        
+        print(f"\nProduct {product_id} not found.")
 
     # protected delete method
     @staticmethod
     def __delete_product(product_id):
-        path = "billing/products.json"
+        data = Product._static_load()
 
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    products = json.load(f)
-            except json.JSONDecodeError:
-                products = []
-        else:
-            products = []
-
-        for p in products:
+        for p in data:
             if p["product_id"] == product_id:
-                deleted_product = p
-                products.remove(p)
+                data.remove(p)
+
+                with open(PRODUCT_FILE, "w") as f:
+                    json.dump(data, f, indent=4)
+
+                # Log deleted products
+                with open(DELETED_FILE, "a") as f:
+                    log = {
+                        "deleted_product": p,
+                        "deleted_at": str(datetime.datetime.now())
+                    }
+                    f.write(json.dumps(log) + "\n")
+
                 print(f"\nProduct: {product_id} deleted successfully")
-                break
-        else:
-            print(f"\nProduct {product_id} not found")
-            return
+                return
+            
+        print(f"\nProduct {product_id} not found")
 
-        with open(path, "w") as f:
-            json.dump(products, f, indent=4)
-
-        # Log deleted products
-        with open("billing/deleted.json", "a") as f:
-            log = {
-                "deleted_product": deleted_product,
-                "deleted_at": str(datetime.datetime.now())
-            }
-            f.write(json.dumps(log) + "\n")
+    @staticmethod
+    def _static_load():
+        if not os.path.exists(PRODUCT_FILE):
+            return []
+        try:
+            with open(PRODUCT_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return []
 
 class Cart:
     def __init__(self):
-        self.product_id = []
-        self.name = []
-        self.quantity = []
+        self.items = [] 
         self.total = 0
 
     def add_to_cart(self, product_id, quantity):
-        path = "billing/products.json"
+        quantity = int(quantity)
+        data = Product._static_load()
 
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    products = json.load(f)
-            except json.JSONDecodeError:
-                products = []
-        else:
-            products = []
-
-        for p in products:
+        for p in data:
             if p["product_id"] == product_id:
+
                 # Check is the 
-                if p["stock"] >= quantity:
-                    quant = quantity
-                else:
-                    quant = p["stock"]
-                    remain = quantity - p["stock"]
-                    print(f"There is only {p["stock"]} of the product {p["product_id"]}") 
-                    print(f"Remaining quantity {remain}")
-                p["stock"] -= quant
-                self.quantity.append(quant)
-                self.product_id.append(p["product_id"])
-                self.name.append(p["name"])
-                self.total += quant * p["price"]
+                if p["stock"] < quantity:
+                    remain = quantity - p['stock']
+                    quantity = p['stock']
+                    print("\n")
+                    print("~"*5 + f"Only {p['stock']} available for {p['name']}" + "~"*5)
+                    print("~"*5 + f"{remain} unit not available" + "~"*5)
 
-        with open(path, "w") as f:
-            json.dump(products, f, indent=4)
+                self.items.append({
+                    "product_id": product_id,
+                    "name": p["name"],
+                    "qty": quantity,
+                    "price": p["price"]
+                })
 
-        self.view_cart()
+                self.total += quantity * p["price"]
+
+                print("Added to cart.")
+                self.view_cart()
+                return
+            
+        print(f"\nProduct {product_id} not found")
 
     def view_cart(self):
-        if not (len(self.product_id) == len(self.name) == len(self.quantity) and self.total > 0 and len(self.product_id) != 0):
-            print("Error in cart")
+        if not self.items:
+            print("Cart empty")
             return
-        print("(Cart Details)")
+        
+        print("\n(Cart Details)")
         print("| S.N. | Product ID | Product | Quantity |")
 
-        for indx, x in self.product_id:
-            print(f"| {indx + 1} | {self.product_id[indx]} | {self.name[indx]} | {self.quantity[indx]} |")
+        for i, item in enumerate(self.items):
+            print(f"| {i+1} | {item['product_id']} | {item['name']} | {item['qty']} | {item['price']} |")
+
+        print("Total =", self.total)
     
     def checkout(self):
-        # Check if all essential attribute are present
-        if not (len(self.product_id) == len(self.name) == len(self.quantity) and self.total > 0 and len(self.product_id) != 0):
-            print("Error in cart")
+        if not self.items:
+            print("Cart empty")
             return
-        
-        path = f"billing/bills/bill-{time.time()}.json"
-        
-        cart = dict()
 
-        cart_var = ["product_id", "name", "quantity"]
+        products = Product._static_load()
+        pid_map = {p["product_id"]: p for p in products}
 
-        for indx, x in enumerate(self.product_id):
-            record = dict(zip(cart_var, [x, self.name[indx], self.quantity[indx]]))
-            cart[f"product {indx + 1}"] = record
+        for item in self.items:
+            pid_map[item["product_id"]]["stock"] -= item["qty"]
 
-        bill_record = {
-            "cart" : cart,
-            "total" : self.total,
-            'created_at' : str(datetime.datetime.now())
-        }
+        with open(PRODUCT_FILE, "w") as f:
+            json.dump(list(pid_map.values()), f, indent=4)
 
-        with open(path, "w") as f:
-            json.dump(bill_record, f, indent=4)
+        # save bill
+        bill_path = f"{BILLS_DIR}/bill-{int(time.time())}.json"
+        with open(bill_path, "w") as f:
+            json.dump({
+                "items": self.items,
+                "total": self.total,
+                "created_at": str(datetime.datetime.now())
+            }, f, indent=4)
 
-        path = "billing/sales.json"
+        # update sales
+        today = time.strftime("%Y-%m-%d")
+        sales = []
 
-        if os.path.exists(path):
+        if os.path.exists(SALES_FILE):
             try:
-                with open(path, "r") as f:
-                    reports = json.load(f)
-            except json.JSONDecodeError:
-                reports = []
-        else:
-            reports = []
+                with open(SALES_FILE, "r") as f:
+                    sales = json.load(f)
+            except:
+                sales = []
 
-        now = time.strftime("%Y-%m-%d")
-
-        product_list = [
-            {"product_id": pid, "quantity": qty}
-            for pid, qty in zip(self.product_id, self.quantity)
-        ]
-
-        found = False
-
-        for r in reports:
-            if r.get("date") == now:
-                r.setdefault("product_list", []).extend(product_list)
-                found = True
+        for s in sales:
+            if s["date"] == today:
+                for item in self.items:
+                    s["product_list"].append({
+                        "product_id": item["product_id"],
+                        "quantity": item["qty"]
+                    })
                 break
-
-        if not found:
-            reports.append({
-                "date": now,
-                "product_list": product_list
+        else:
+            sales.append({
+                "date": today,
+                "product_list": [
+                    {"product_id": item["product_id"], "quantity": item["qty"]}
+                    for item in self.items
+                ]
             })
 
-        with open(path, "w") as f:
-            json.dump(reports, f, indent=4)
+        with open(SALES_FILE, "w") as f:
+            json.dump(sales, f, indent=4)
+
+        print("\nCheckout complete!")
+        print("Bill saved at:", bill_path)
+
+        self.items.clear()
+        self.total = 0

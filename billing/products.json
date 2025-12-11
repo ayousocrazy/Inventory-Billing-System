@@ -1,0 +1,14 @@
+[
+    {
+        "product_id": "2512-1-N",
+        "name": "N+ Moisturizer",
+        "stock": 0.0,
+        "price": 300.0
+    },
+    {
+        "product_id": "2512-2-P",
+        "name": "Plum cream",
+        "stock": 1.0,
+        "price": 480.0
+    }
+]
