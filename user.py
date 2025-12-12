@@ -1,8 +1,6 @@
-import json
-import os
-import time
-import datetime
+import json, os, time, datetime
 from product import *
+from cache import *
 
 os.chdir(r"C:\Users\HP\Desktop\Project\Inventory and Billing Management System")
 
@@ -31,14 +29,22 @@ class Cashier:
 
         for u in users:
             if u["username"].lower() == str(username).lower():
-                if u["password"] != str(password):
+                if Cashier.xor_decrypt(u["password"]) != str(password):
                     print("~"*5 + " Incorrect password " + "*"*5)
                     return None
 
-                return Admin(u["username"], u["password"]) if u["role"] == "admin" else Cashier(u["username"], u["password"])
+                return Admin(u["username"], Cashier.xor_encrypt(u["password"])) if u["role"] == "admin" else Cashier(u["username"], Cashier.xor_encrypt(u["password"]))
 
-        print("~"*5 + f"{username} not registered" + "~"*5)
+        print("~"*5 + f" {username} not registered " + "~"*5)
         return None
+    
+    @staticmethod
+    def xor_encrypt(password, key=42):
+        return "".join(chr(ord(c) ^ key) for c in password)
+
+    @staticmethod
+    def xor_decrypt(encrypted, key=42):
+        return "".join(chr(ord(c) ^ key) for c in encrypted)
 
 class Admin(Cashier):
     def view_inventory(self):
@@ -59,7 +65,7 @@ class Admin(Cashier):
         elif option in ["2", "(2)"]:
             self._view_low_stock_report()
         else:
-            print("~" * 15 + "Option not found" + "~" * 15)
+            print("~" * 5 + "Option not found" + "~" * 5)
 
     def _view_sales_report(self):
         # Show sales report
@@ -113,7 +119,7 @@ class Admin(Cashier):
     def save_user(self, username, password, role):
         user_record = {
             'username' : username,
-            'password' : password,
+            'password' : self.xor_encrypt(password),
             'role' : role,
             'created_at' : str(datetime.datetime.now())
         }
@@ -133,3 +139,6 @@ class Admin(Cashier):
         with open(path, 'w') as f:
             json.dump(users, f, indent=4) # indent to make it clear
         print(f"User '{username}' created successfully!")
+
+if __name__ == "main":
+    pass

@@ -1,7 +1,4 @@
-import json
-import os
-import time
-import datetime
+import json, os, time, datetime
 
 os.chdir(r"C:\Users\HP\Desktop\Project\Inventory and Billing Management System")
 
