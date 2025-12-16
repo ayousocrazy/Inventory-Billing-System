@@ -10,5 +10,17 @@
         "name": "Plum cream",
         "stock": 1.0,
         "price": 480.0
+    },
+    {
+        "product_id": "2512-3-V",
+        "name": "Vivo Y16",
+        "stock": 48.0,
+        "price": 12000.0
+    },
+    {
+        "product_id": "2512-4-S",
+        "name": "SAMSUNG A20S",
+        "stock": 25.0,
+        "price": 33000.0
     }
 ]
